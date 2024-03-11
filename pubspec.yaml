@@ -38,6 +38,7 @@ dependencies:
   permission_handler: ^11.3.0
   get: ^4.6.6
   flutter_blue: 
+  beacons_plugin: ^2.0.8
 
 dev_dependencies:
   flutter_test:
