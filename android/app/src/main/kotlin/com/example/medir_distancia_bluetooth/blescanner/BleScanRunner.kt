@@ -1,52 +1,62 @@
-package com.lorenzofelletti.simpleblescanner.blescanner
+package com.example.medir_distancia_bluetooth.blescanner
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
+import android.content.Context
+import android.content.Intent
 import android.util.Log
-import com.lorenzofelletti.simpleblescanner.BuildConfig.DEBUG
+import com.example.medir_distancia_bluetooth.BuildConfig.DEBUG
+import com.example.medir_distancia_bluetooth.blescanner.manager.BleScanManager
 import com.lorenzofelletti.simpleblescanner.blescanner.model.BleScanCallback
 import kotlin.math.pow
 
-class BleScanRunner(private val btManager: BluetoothManager) {
-    private lateinit var bleScanManager: BleScanManager
+class BleScanRunner(private val btManager: BluetoothManager, private val periodTime: Long = 0, private val applicationContext:Context) {
 
+    private lateinit var bleScanManager: BleScanManager
     private lateinit var foundDevices: MutableList<List<String>>
 
     @SuppressLint("MissingPermission")
-    fun searchDevices() {
-
-        if (DEBUG) Log.e(TAG, "Running Scan")
+    fun init(): BleScanManager {
 
         foundDevices = emptyList<List<String>>().toMutableList()
 
-        bleScanManager = BleScanManager(btManager, 5000, scanCallback = BleScanCallback({ deviceFound ->
-            val macAdress = deviceFound!!.device.address.toString()
+        bleScanManager = BleScanManager(btManager, periodTime, scanCallback = BleScanCallback({ deviceFound ->
+            if (deviceFound?.device?.address.isNullOrBlank()) return@BleScanCallback
+            val macAdress = deviceFound!!.device.address!!
+            val name:String = (if (deviceFound.device.name != null) deviceFound.device.name else '-').toString()
             val rssi = deviceFound.rssi
 
             // verificar e documentar essa função
             val distance = calculateDistanceLDPLM(rssi)
 
-            val device:MutableList<String> = mutableListOf(macAdress, rssi.toString(), String.format("%.3f", distance))
+            val device:MutableList<String> = mutableListOf(macAdress, name, rssi.toString(), String.format("%.3f", distance))
 
             var hasDevice = false
-            foundDevices.forEach{ it ->
+            foundDevices.forEach{
                 if (it[0].equals(macAdress)) {
                     true.also { hasDevice = true }
                 }
 
             }
-            if (DEBUG && !hasDevice) Log.e(TAG, "Device: $device $rssi $distance")
 
-            if (!hasDevice) foundDevices += device
+            if (DEBUG) Log.e(TAG, "Device: $device $macAdress $rssi $distance")
+
+
+            if (!hasDevice) {
+                foundDevices += device
+                val intent = Intent("com.exemple.medir_distancia_bluetooth")
+                intent.putExtra("device",ArrayList(foundDevices.map { ArrayList(it) }))
+                applicationContext.sendBroadcast(intent)
+            }
 
         }))
 
-        bleScanManager.afterScanActions.add {
-            if (DEBUG) Log.e(TAG, "Devices: $foundDevices")
-        }
+        return bleScanManager
 
+    }
+
+    fun stop() {
         bleScanManager.scanBleDevices()
-
     }
 
     fun calculateDistanceLDPLM(RSSI: Int): Double {

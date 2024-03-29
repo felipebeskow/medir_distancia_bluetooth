@@ -1,4 +1,4 @@
-package com.example.medir_distancia_bluetooth.blescanner
+package com.example.medir_distancia_bluetooth.blescanner.manager
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
@@ -43,8 +43,6 @@ class BleScanManager(
         if (scanning) {
             stopScan()
         } else {
-            // stops scanning after scanPeriod millis
-            handler.postDelayed({ stopScan() }, scanPeriod)
             // execute all the functions to execute before scanning
             executeBeforeScanActions()
 

@@ -1,4 +1,36 @@
 package com.example.medir_distancia_bluetooth.blescanner
 
-class BleScanEventChannel {
+import android.content.*
+import io.flutter.plugin.common.EventChannel
+import io.flutter.plugin.common.EventChannel.EventSink
+
+
+class BleScanEventChannel(context: Context):EventChannel.StreamHandler {
+
+    private var devicesState: BroadcastReceiver? = null
+    private var applicationContext: Context = context
+
+    override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+        devicesState = createDeviceState(events!!)
+        applicationContext.registerReceiver(
+            devicesState,
+            IntentFilter("com.exemple.medir_distancia_bluetooth")
+        )
+    }
+
+    override fun onCancel(arguments: Any?) {
+        applicationContext.unregisterReceiver(devicesState)
+        devicesState = null
+    }
+
+    private fun createDeviceState(events: EventSink): BroadcastReceiver? {
+        return object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                val devices = intent.getSerializableExtra("device") as ArrayList<*>
+                events.success(devices)
+            }
+        }
+    }
+
+
 }
