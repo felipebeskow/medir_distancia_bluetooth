@@ -60,8 +60,8 @@ class _MyHomePageState extends State<MyHomePage> {
                               return Card(
                                 elevation: 2,
                                 child: ListTile(
-                                  title: Text(data[0] + ' - ' + data[3]),
-                                  subtitle: Text(data[1]),
+                                  title: Text(data[0] + '/' + data[1]),
+                                  subtitle: Text(data[3]),
                                   trailing: Text(data[2]),
                                 ),
                               );

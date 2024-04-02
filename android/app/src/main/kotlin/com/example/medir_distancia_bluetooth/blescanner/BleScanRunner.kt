@@ -4,17 +4,23 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import com.example.medir_distancia_bluetooth.BuildConfig.DEBUG
 import com.example.medir_distancia_bluetooth.blescanner.manager.BleScanManager
 import com.lorenzofelletti.simpleblescanner.blescanner.model.BleScanCallback
+import kotlin.math.PI
 import kotlin.math.pow
+import kotlin.math.sqrt
 
 class BleScanRunner(private val btManager: BluetoothManager, private val periodTime: Long = 0, private val applicationContext:Context) {
 
     private lateinit var bleScanManager: BleScanManager
     private lateinit var foundDevices: MutableList<List<String>>
 
+
+    @RequiresApi(Build.VERSION_CODES.O)
     @SuppressLint("MissingPermission")
     fun init(): BleScanManager {
 
@@ -25,21 +31,30 @@ class BleScanRunner(private val btManager: BluetoothManager, private val periodT
             val macAdress = deviceFound!!.device.address!!
             val name:String = (if (deviceFound.device.name != null) deviceFound.device.name else '-').toString()
             val rssi = deviceFound.rssi
+            val ptx = if (deviceFound.txPower != 127 ) deviceFound.txPower else -26 //padrão do fabricante Holy-IOT
 
             // verificar e documentar essa função
-            val distance = calculateDistanceLDPLM(rssi)
+            val friis = calculateDistanceFriis(ptx.toDouble(),rssi.toDouble())
+            val ldplm = calculateDistanceLDPLM(rssi)
+            val distance = "LDPLM:" + String.format("%.5f", ldplm) +
+                    " Friis:" + String.format("%.5f", friis)
 
-            val device:MutableList<String> = mutableListOf(macAdress, name, rssi.toString(), String.format("%.3f", distance))
+            val device:MutableList<String> = mutableListOf(macAdress, name, rssi.toString(), distance)
 
             var hasDevice = false
-            foundDevices.forEach{
-                if (it[0].equals(macAdress)) {
-                    true.also { hasDevice = true }
+            foundDevices = foundDevices.map {
+                val dev = it.toMutableList()
+                if (dev[0] == (macAdress)) {
+                    hasDevice = true
+                    dev[2] = rssi.toString()
+                    dev[3] = distance
                 }
+                dev
+            }.toMutableList()
 
+            if (DEBUG && name == "Holy-IOT") {
+                Log.e(TAG, "Device: $device $macAdress $rssi $distance")
             }
-
-            if (DEBUG) Log.e(TAG, "Device: $device $macAdress $rssi $distance")
 
 
             if (!hasDevice) {
@@ -59,10 +74,19 @@ class BleScanRunner(private val btManager: BluetoothManager, private val periodT
         bleScanManager.scanBleDevices()
     }
 
-    fun calculateDistanceLDPLM(RSSI: Int): Double {
-        val RSSI0 = -66
+    private fun calculateDistanceLDPLM(rssi: Int, rssi0: Int = -66): Double {
+        //val RSSI0 = -66 // potencia à um 1 m
         val n = 2.0
-        return 10.0.pow((RSSI0 - RSSI) / (10 * n))
+        return 10.0.pow((rssi0 - rssi) / (10 * n))
+    }
+
+    private fun calculateDistanceFriis(pt: Double, pr: Double): Double {
+        //Log.e(TAG, "pt:$Pt pr:$Pr")
+        return sqrt(converterDbmToWatts(pt) / converterDbmToWatts(pr)) * (3.0*10.0.pow(8) / (4 * PI * 2.4*10.0.pow(9)))
+    }
+
+    private fun converterDbmToWatts(dbm: Double): Double {
+        return 10.0.pow(dbm/10)
     }
 
     companion object {
