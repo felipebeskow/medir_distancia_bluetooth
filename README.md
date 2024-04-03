@@ -1,16 +1,20 @@
-# medir_distancia_bluetooth
+# Protótipo para medir distância
 
-A new Flutter project.
+Protótipo para medir distâncias de dispositivos bluetooth.
 
-## Getting Started
+Para funcionar com todos os dispositvos, incluindo os BLE, foi implementado nativamente e por meio de event channel e method channel, executa a busca e retorna a lista dos dispositivos com a estimativa de distância em metros pelos métodos LDPLM e Friis de cálculo de distância.
 
-This project is a starting point for a Flutter application.
+Os cálculos foram baseados no artigo "Avaliação de Técnicas de Localização de Dispositivos BLE para a Physical Web e Prova de Conceito"
 
-A few resources to get you started if this is your first Flutter project:
+## Aplicativo
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Para usar o aplicativo pode ser feito por meio do download nesse link [https://raw.githubusercontent.com/felipebeskow/medir_distancia_bluetooth/main/binary/app.apk](https://raw.githubusercontent.com/felipebeskow/medir_distancia_bluetooth/main/binary/app.apk) ou compilando o código desse repositório, seguindo os seguinte passos:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```
+git clone https://github.com/felipebeskow/medir_distancia_bluetooth
+cd medir_distancia_bluetooth
+flutter run
+```
+
+## Fonte:
+[Avaliação de Técnicas de Localização de Dispositivos BLE para a Physical Web e Prova de Conceito](https://bdm.unb.br/bitstream/10483/17781/1/2017_GuilhermeDavid_SamuelVinicius_tcc.pdf)
